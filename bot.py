@@ -1,14 +1,25 @@
 import discord
-import re
 import requests
 import asyncio
-
+import platform
+import sys
 from discord.ext import commands
+
+skip_roles = ['@everyone', 'Duckie', 'Analysis']
 
 bot = commands.Bot(command_prefix='.')
 
 # disable default help
 bot.remove_command('help')
+
+@bot.command()
+async def info(ctx):
+	await ctx.send('''
+	**Duckie info**
+	__Platform__: %s
+	__Python__: %s
+	''' % (platform.platform(), sys.version.replace('\n','')))
+
 
 @bot.command()
 async def help(ctx):
@@ -27,6 +38,9 @@ async def help(ctx):
 	**remove** Remove a role from yourself.
 	\t.roles remove Windows
 	\t.roles remove all
+	__Info:__
+	Displays info about Duckie.
+	\t.info
 	''')
 
 @bot.command()
@@ -71,17 +85,17 @@ async def roles(ctx, *args):
 	guild = message.guild
 
 	roles_msg = '```diff\nAvailable roles:'
-	roles_msg += '\n+ ' + '\n+ '.join(list(filter(lambda role: role not in ['@everyone', 'Duckie'], map(lambda role: str(role), guild.roles))))
+	roles_msg += '\n+ ' + '\n+ '.join(list(filter(lambda role: role not in skip_roles, map(lambda role: str(role), guild.roles))))
 	roles_msg += '\n```'
 
 	user_roles_msg = '```diff\nRoles assigned to %s:' % author.display_name
 	if len(author.roles) == 1:
 		user_roles_msg += '\n- No roles assigned'
 	else:
-		user_roles_msg += '\n+ ' + '\n+ '.join(list(filter(lambda role: role not in ['@everyone', 'Duckie'], map(lambda role: str(role), author.roles))))
+		user_roles_msg += '\n+ ' + '\n+ '.join(list(filter(lambda role: role not in skip_roles, map(lambda role: str(role), author.roles))))
 	user_roles_msg += '\n```'
 
-	match_roles = list(filter(lambda role: role not in ['@everyone', 'Duckie'], map(lambda role: str(role).upper(), guild.roles)))
+	match_roles = list(filter(lambda role: role not in skip_roles, map(lambda role: str(role).upper(), guild.roles)))
 	
 	command = args[0].upper()
 
@@ -136,13 +150,11 @@ async def roles(ctx, *args):
 			progress = await ctx.send('Progress: {: <2d}/{: <2d}'.format(i, len(user_roles)-1))
 
 			for role in user_roles:
-				if (role.name != '@everyone'):
+				if (role.name not in skip_roles):
 					await author.remove_roles(role)
 					await progress.edit(content='Progress: {: <2d}/{: <2d}'.format(i, len(user_roles)-1))
 					i+=1
 
-			# for role in guild.roles:
-			# 	await author.remove_roles(role)
 			await ctx.send('Removed all roles from %s!' % author.display_name)
 			return
 
