@@ -1,2 +1,5 @@
+db.json
 token.txt
 _*
+.vscode/
+.DS_Store
